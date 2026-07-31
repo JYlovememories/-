@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a5d23"/>
+      <stop offset="100%" stop-color="#2d3a14"/>
+    </linearGradient>
+    <radialGradient id="starGrad" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#ffd700"/>
+      <stop offset="50%" stop-color="#d4c06a"/>
+      <stop offset="100%" stop-color="#8a7a3f"/>
+    </radialGradient>
+    <radialGradient id="medalGrad" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#f5d77b"/>
+      <stop offset="40%" stop-color="#c9a93e"/>
+      <stop offset="80%" stop-color="#8a6d1f"/>
+      <stop offset="100%" stop-color="#5a4515"/>
+    </radialGradient>
+  </defs>
+
+  <!-- 背景圆形 -->
+  <rect width="512" height="512" rx="80" ry="80" fill="url(#bgGrad)"/>
+
+  <!-- 装饰光环 -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="rgba(212,192,106,0.3)" stroke-width="2"/>
+  <circle cx="256" cy="256" r="185" fill="none" stroke="rgba(212,192,106,0.15)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- 大五角星 -->
+  <path d="M256 90 L295 205 L420 205 L318 275 L358 390 L256 320 L154 390 L194 275 L92 205 L217 205 Z"
+        fill="url(#starGrad)" stroke="#8a7a3f" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- 中心勋章 -->
+  <circle cx="256" cy="270" r="55" fill="url(#medalGrad)" stroke="#d4c06a" stroke-width="3"/>
+  <circle cx="256" cy="270" r="45" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <text x="256" y="278" text-anchor="middle" font-size="32" font-weight="bold" fill="#3a2a0a" font-family="serif">八一</text>
+
+  <!-- 小五角星装饰 -->
+  <path d="M256 130 L265 158 L293 158 L270 175 L279 203 L256 186 L233 203 L242 175 L219 158 L247 158 Z"
+        fill="#ffd700" opacity="0.9"/>
+</svg>
