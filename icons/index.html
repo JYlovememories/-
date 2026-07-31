@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4a5d23">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="八一礼物">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="八一建军节专属纪念 · 致最可爱的你">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="./icons/icon-144.png">
+<title>八一专属纪念 · 致最可爱的你</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%; min-height: 100vh; overflow-x: hidden;
+    font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    color: #e8e4c9;
+    background: #060a04;
+    user-select: none;
+  }
+
+  .sky {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(74,100,35,0.35) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(40,60,20,0.4) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 50%, rgba(15,25,10,1) 0%, #030604 100%);
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #fff, 0 0 12px rgba(255,255,255,0.5);
+    animation: twinkle var(--dur) ease-in-out infinite;
+    opacity: 0;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.1; transform: scale(0.6); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .camo-overlay {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background-image:
+      radial-gradient(circle at 15% 25%, rgba(60,80,30,0.25) 0%, transparent 8%),
+      radial-gradient(circle at 75% 15%, rgba(80,100,40,0.2) 0%, transparent 10%),
+      radial-gradient(circle at 45% 65%, rgba(50,70,25,0.2) 0%, transparent 12%),
+      radial-gradient(circle at 85% 80%, rgba(55,75,28,0.22) 0%, transparent 9%),
+      radial-gradient(circle at 25% 85%, rgba(70,90,35,0.18) 0%, transparent 11%);
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+  }
+
+  .page {
+    position: relative; z-index: 10;
+    width: 100%; min-height: 100vh;
+    display: none;
+    padding: 0;
+  }
+  .page.active { display: block; }
+
+  #lockPage {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 100vh; padding: 20px;
+  }
+  #lockPage.active { display: flex; }
+
+  .lock-star {
+    width: 60px; height: 60px;
+    margin: 0 auto 20px;
+    animation: starSpin 6s linear infinite;
+  }
+  @keyframes starSpin {
+    0% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 8px #d4c06a); }
+    50% { transform: rotate(180deg) scale(1.1); filter: drop-shadow(0 0 20px #ffd700); }
+    100% { transform: rotate(360deg) scale(1); filter: drop-shadow(0 0 8px #d4c06a); }
+  }
+
+  .lock-title {
+    font-size: 28px; font-weight: 700;
+    color: #d4c06a;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(212,192,106,0.6), 0 0 40px rgba(212,192,106,0.3);
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .lock-subtitle {
+    font-size: 14px; color: #9a9a6a;
+    letter-spacing: 2px; margin-bottom: 30px;
+    text-align: center;
+  }
+  .lock-prompt {
+    font-size: 15px; color: #c9b86a;
+    margin-bottom: 10px; letter-spacing: 1px;
+    text-align: center;
+  }
+  .lock-hint {
+    font-size: 12px; color: #7a8060;
+    margin-bottom: 20px; font-style: italic;
+    text-align: center;
+  }
+
+  .password-display {
+    display: flex; gap: 8px; justify-content: center;
+    margin-bottom: 25px;
+  }
+  .pwd-digit {
+    width: 20px; height: 26px;
+    border-bottom: 2px solid #6a7a40;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #d4c06a; font-weight: bold;
+    transition: all 0.3s;
+  }
+  .pwd-digit.filled { border-color: #d4c06a; box-shadow: 0 4px 12px rgba(212,192,106,0.2); }
+  .pwd-digit.error { animation: shake 0.4s; border-color: #c44; color: #c44; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 58px);
+    gap: 10px;
+    justify-content: center;
+  }
+  .key {
+    width: 58px; height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #4a5d23, #2d3a14);
+    border: 2px solid #6a7a40;
+    color: #d4c06a; font-size: 22px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1);
+  }
+  .key:active {
+    transform: scale(0.92);
+    background: linear-gradient(145deg, #5a6d33, #3d4a24);
+  }
+  .key.special {
+    font-size: 13px; background: linear-gradient(145deg, #3a4a1a, #1d2a0a);
+  }
+
+  .unlock-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #060a04;
+    display: none; align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  .unlock-overlay.show {
+    display: flex;
+    animation: overlayFadeIn 0.6s ease-out;
+  }
+  @keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .unlock-content {
+    text-align: center;
+    animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .unlock-icon {
+    font-size: 72px; margin-bottom: 16px;
+    animation: iconPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes iconPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px #d4c06a); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 40px #ffd700); }
+  }
+  .unlock-text {
+    font-size: 24px; color: #d4c06a;
+    letter-spacing: 4px; margin-bottom: 12px;
+    font-weight: bold;
+    text-shadow: 0 0 30px rgba(212,192,106,0.9), 0 0 60px rgba(212,192,106,0.5);
+  }
+  .unlock-detail {
+    font-size: 14px; color: #c9b86a;
+    letter-spacing: 1px; line-height: 2;
+  }
+
+  #mainPage {
+    padding: 0; overflow-y: auto;
+  }
+
+  .hero-section {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 20px;
+    position: relative;
+  }
+  .hero-title {
+    font-size: 30px; font-weight: 800;
+    color: #d4c06a;
+    letter-spacing: 6px;
+    text-align: center;
+    text-shadow: 0 0 30px rgba(212,192,106,0.7), 0 0 60px rgba(212,192,106,0.4);
+    margin-bottom: 10px;
+    animation: titleGlow 3s ease-in-out infinite;
+  }
+  @keyframes titleGlow {
+    0%, 100% { text-shadow: 0 0 30px rgba(212,192,106,0.7), 0 0 60px rgba(212,192,106,0.4); }
+    50% { text-shadow: 0 0 50px rgba(212,192,106,1), 0 0 80px rgba(212,192,106,0.6); }
+  }
+  .hero-date {
+    font-size: 15px; color: #9a9a6a;
+    letter-spacing: 4px; margin-bottom: 25px;
+  }
+  .hero-greeting {
+    font-size: 18px; color: #c9b86a;
+    text-align: center; line-height: 1.8;
+    letter-spacing: 2px; max-width: 300px;
+    margin-bottom: 30px;
+  }
+  .hero-hint {
+    color: #7a8060; font-size: 12px;
+    letter-spacing: 3px; margin-bottom: 20px;
+  }
+
+  .music-cta {
+    text-align: center;
+    margin-bottom: 25px;
+    animation: ctaFadeIn 0.8s ease-out;
+  }
+  @keyframes ctaFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .music-cta-btn {
+    display: inline-flex;
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(74,93,35,0.9), rgba(45,58,20,0.9));
+    border: 2px solid #d4c06a;
+    color: #d4c06a;
+    font-size: 28px;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    animation: ctaPulse 1.8s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 0 rgba(212,192,106,0.6);
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+  }
+  .music-cta-btn:active {
+    transform: scale(0.92);
+  }
+  @keyframes ctaPulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 0 rgba(212,192,106,0.6); }
+    50% { box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 18px rgba(212,192,106,0); }
+  }
+  .music-cta-btn.playing {
+    animation: ctaPlaying 1s ease-in-out infinite;
+  }
+  @keyframes ctaPlaying {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .music-cta-label {
+    font-size: 13px; color: #c9b86a;
+    letter-spacing: 1px;
+  }
+
+  .floating-star {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.15;
+  }
+  .floating-star svg {
+    animation: floatStar var(--float-dur, 20s) ease-in-out infinite;
+  }
+  @keyframes floatStar {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-20px) rotate(5deg); }
+    50% { transform: translateY(-10px) rotate(-3deg); }
+    75% { transform: translateY(-25px) rotate(8deg); }
+  }
+
+  .blessing-star {
+    position: absolute;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: transform 0.3s;
+    z-index: 5;
+  }
+  .blessing-star:active { transform: scale(0.85); }
+  .blessing-star svg {
+    filter: drop-shadow(0 0 8px #d4c06a);
+    transition: filter 0.3s;
+  }
+  .blessing-star:active svg {
+    filter: drop-shadow(0 0 16px #ffd700);
+  }
+
+  .click-blessing {
+    position: fixed;
+    pointer-events: none;
+    font-size: 16px; color: #ffd700;
+    font-weight: bold;
+    animation: blessingFloat 2.2s ease-out forwards;
+    z-index: 200;
+    text-shadow: 0 0 10px #d4c06a, 0 0 20px rgba(212,192,106,0.5);
+    white-space: nowrap;
+  }
+  @keyframes blessingFloat {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-100px) scale(1.4); }
+  }
+
+  .confession-section {
+    padding: 50px 25px;
+    text-align: center;
+    position: relative;
+  }
+  .section-title {
+    font-size: 20px; color: #d4c06a;
+    letter-spacing: 4px; margin-bottom: 28px;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .section-title::before, .section-title::after {
+    content: '★'; color: #6a7a40; font-size: 14px;
+  }
+
+  .confession-card {
+    background: linear-gradient(145deg, rgba(60,75,30,0.6), rgba(30,40,15,0.85));
+    border: 1px solid rgba(106,122,64,0.5);
+    border-radius: 12px;
+    padding: 30px 22px;
+    margin: 0 auto; max-width: 340px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,192,106,0.2);
+    position: relative;
+  }
+  .confession-card::before {
+    content: ''; position: absolute;
+    top: -1px; left: 20px; right: 20px; height: 2px;
+    background: linear-gradient(90deg, transparent, #d4c06a, transparent);
+  }
+
+  .typewriter-text {
+    font-size: 15px; color: #e8e4c9;
+    line-height: 2; letter-spacing: 1px;
+    text-align: left;
+    min-height: 260px;
+    white-space: pre-wrap;
+  }
+  .typewriter-text .cursor {
+    display: inline-block;
+    width: 2px; height: 16px;
+    background: #d4c06a;
+    margin-left: 2px;
+    animation: blink 0.7s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .confession-sign {
+    margin-top: 18px;
+    font-size: 13px; color: #9a9a6a;
+    text-align: right; font-style: italic;
+  }
+
+  .medal-section {
+    padding: 50px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .medals-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .medal-card {
+    width: 100px;
+    display: flex; flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .medal-card:active { transform: scale(0.95); }
+
+  .medal-shape {
+    width: 80px; height: 80px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+    animation: medalFloat 3s ease-in-out infinite;
+  }
+  .medal-shape svg {
+    width: 100%; height: 100%;
+    filter: drop-shadow(0 4px 12px rgba(212,192,106,0.6));
+  }
+  .medal-shape .medal-num {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px; color: #3a2a0a;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.3;
+    width: 50px;
+  }
+  @keyframes medalFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .medal-name {
+    font-size: 13px; color: #d4c06a;
+    font-weight: bold; letter-spacing: 1px;
+    text-align: center;
+    line-height: 1.4;
+    text-shadow: 0 0 8px rgba(212,192,106,0.4);
+  }
+
+  .medal-hint {
+    font-size: 12px; color: #7a8060;
+    letter-spacing: 1px; margin-top: 20px;
+  }
+
+  .music-section {
+    padding: 30px 20px 60px;
+    text-align: center;
+  }
+  .music-btn {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #4a5d23, #2d3a14);
+    border: 2px solid #6a7a40;
+    color: #d4c06a;
+    font-size: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  }
+  .music-btn.playing {
+    animation: musicPulse 2s ease-in-out infinite;
+    background: linear-gradient(145deg, #5a6d33, #3d4a24);
+  }
+  @keyframes musicPulse {
+    0%, 100% { box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 0 0 rgba(212,192,106,0.6); }
+    50% { box-shadow: 0 4px 15px rgba(0,0,0,0.4), 0 0 0 15px rgba(212,192,106,0); }
+  }
+  .music-btn.hint {
+    animation: musicHint 1s ease-in-out infinite;
+  }
+  @keyframes musicHint {
+    0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    50% { transform: scale(1.1); box-shadow: 0 4px 25px rgba(212,192,106,0.8), 0 0 20px rgba(212,192,106,0.5); }
+  }
+  .music-label {
+    font-size: 13px; color: #9a9a6a;
+    margin-top: 12px; letter-spacing: 1px;
+  }
+
+  .footer {
+    padding: 20px; text-align: center;
+    font-size: 11px; color: #5a6040;
+    letter-spacing: 2px;
+  }
+
+  .heart-particle {
+    position: fixed;
+    pointer-events: none;
+    font-size: 20px;
+    z-index: 150;
+    animation: heartRise 2s ease-out forwards;
+  }
+  @keyframes heartRise {
+    0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(-150px) scale(0.5) rotate(20deg); }
+  }
+
+  .scroll-hint {
+    position: absolute; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    color: #7a8060; font-size: 12px;
+    animation: bounce 2s infinite;
+    letter-spacing: 2px;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  @media (max-width: 360px) {
+    .lock-title { font-size: 24px; }
+    .hero-title { font-size: 24px; letter-spacing: 4px; }
+    .keypad { grid-template-columns: repeat(3, 50px); gap: 8px; }
+    .key { width: 50px; height: 50px; font-size: 18px; }
+    .medal-shape { width: 70px; height: 70px; }
+    .medal-name { font-size: 12px; }
+    .medals-wrap { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sky" id="sky"></div>
+<div class="camo-overlay"></div>
+
+<div class="page active" id="lockPage">
+  <div class="lock-star">
+    <svg viewBox="0 0 24 24" fill="#d4c06a" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.2L2 10l7.1-1.1z"/>
+    </svg>
+  </div>
+  <div class="lock-title">八一建军节</div>
+  <div class="lock-subtitle">· 致 最可爱的人 ·</div>
+
+  <div class="lock-prompt">请输入我们的专属暗号</div>
+  <div class="lock-hint">提示：我们的纪念日（8位数字）</div>
+
+  <div class="password-display" id="pwdDisplay">
+    <div class="pwd-digit"></div>
+    <div class="pwd-digit"></div>
+    <div class="pwd-digit"></div>
+    <div class="pwd-digit"></div>
+    <div class="pwd-digit"></div>
+    <div class="pwd-digit"></div>
+    <div class="pwd-digit"></div>
+    <div class="pwd-digit"></div>
+  </div>
+
+  <div class="keypad" id="keypad">
+    <div class="key" data-num="1">1</div>
+    <div class="key" data-num="2">2</div>
+    <div class="key" data-num="3">3</div>
+    <div class="key" data-num="4">4</div>
+    <div class="key" data-num="5">5</div>
+    <div class="key" data-num="6">6</div>
+    <div class="key" data-num="7">7</div>
+    <div class="key" data-num="8">8</div>
+    <div class="key" data-num="9">9</div>
+    <div class="key special" id="clearBtn">清除</div>
+    <div class="key" data-num="0">0</div>
+    <div class="key special" id="delBtn">删除</div>
+  </div>
+</div>
+
+<div class="unlock-overlay" id="unlockOverlay">
+  <div class="unlock-content">
+    <div class="unlock-icon">🎖️</div>
+    <div class="unlock-text">任务解锁成功！</div>
+    <div class="unlock-detail">
+      编号：081<br>
+      任务名称：守护我们的幸福<br>
+      执行人：爱你的佳<br>
+      状态：永久有效 ❤️
+    </div>
+  </div>
+</div>
+
+<div class="page" id="mainPage">
+
+  <section class="hero-section">
+    <div class="hero-title">致 我的超级英雄</div>
+    <div class="hero-date">★ 2026.08.01 ★</div>
+    <div class="hero-greeting">
+      抬眼有祖国星河<br>
+      身后有幸福你我
+    </div>
+    <div class="hero-hint">✦ 点击星星 送上祝福 ✦</div>
+    <div class="music-cta" id="musicCta" style="display:none;">
+      <div class="music-cta-btn" id="musicCtaBtn">
+        <span>♪</span>
+      </div>
+      <div class="music-cta-label">点击播放 · 我们的旋律</div>
+    </div>
+    <div class="scroll-hint">↓ 向下滑动 ↓</div>
+  </section>
+
+  <section class="confession-section">
+    <div class="section-title">专属告白</div>
+    <div class="confession-card">
+      <div class="typewriter-text" id="typewriter"></div>
+      <div class="confession-sign">—— 你的佳佳</div>
+    </div>
+  </section>
+
+  <section class="medal-section">
+    <div class="section-title">专属荣誉勋章</div>
+    <div class="medals-wrap" id="medalsWrap">
+      <!-- 勋章由 JS 生成 -->
+    </div>
+    <div class="medal-hint">✦ 每一枚都是我对你的爱 ✦</div>
+  </section>
+
+  <section class="music-section">
+    <div class="music-btn" id="musicBtn">♪</div>
+    <div class="music-label" id="musicLabel">点击播放 · 属于我们的旋律</div>
+  </section>
+
+  <div class="footer">
+    ★ 2026.08.01 · 八一建军节快乐 ★
+  </div>
+</div>
+
+<audio id="bgm" src="./music.mp3" loop preload="auto" playsinline webkit-playsinline></audio>
+
+<script>
+/* ============ 星空生成 ============ */
+(function generateStars() {
+  const sky = document.getElementById('sky');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 0.5;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.setProperty('--dur', (Math.random() * 3 + 2) + 's');
+    s.style.animationDelay = Math.random() * 5 + 's';
+    sky.appendChild(s);
+  }
+})();
+
+/* ============ 密码解锁 ============ */
+const CORRECT_PASSWORD = '20250829';
+let currentInput = '';
+const DIGIT_COUNT = 8;
+
+const pwdDisplay = document.getElementById('pwdDisplay');
+const keypad = document.getElementById('keypad');
+const lockPage = document.getElementById('lockPage');
+const mainPage = document.getElementById('mainPage');
+const unlockOverlay = document.getElementById('unlockOverlay');
+const musicBtn = document.getElementById('musicBtn');
+const musicLabel = document.getElementById('musicLabel');
+const musicCta = document.getElementById('musicCta');
+const musicCtaBtn = document.getElementById('musicCtaBtn');
+const bgm = document.getElementById('bgm');
+
+function updateDisplay() {
+  const digits = pwdDisplay.querySelectorAll('.pwd-digit');
+  digits.forEach((d, i) => {
+    d.textContent = currentInput[i] || '';
+    if (currentInput[i]) d.classList.add('filled');
+    else d.classList.remove('filled');
+  });
+}
+
+function inputDigit(n) {
+  if (currentInput.length >= DIGIT_COUNT) return;
+  currentInput += n;
+  updateDisplay();
+  if (currentInput.length === DIGIT_COUNT) {
+    setTimeout(checkPassword, 200);
+  }
+}
+
+function deleteDigit() {
+  if (currentInput.length > 0) {
+    currentInput = currentInput.slice(0, -1);
+    updateDisplay();
+  }
+}
+
+function clearInput() {
+  currentInput = '';
+  updateDisplay();
+}
+
+function checkPassword() {
+  if (currentInput === CORRECT_PASSWORD) {
+    showUnlock();
+  } else {
+    const digits = pwdDisplay.querySelectorAll('.pwd-digit');
+    digits.forEach(d => {
+      d.classList.add('error');
+      setTimeout(() => d.classList.remove('error'), 400);
+    });
+    currentInput = '';
+    setTimeout(updateDisplay, 500);
+  }
+}
+
+function showUnlock() {
+  unlockOverlay.classList.add('show');
+
+  // 粒子效果
+  for (let i = 0; i < 25; i++) {
+    setTimeout(() => {
+      const heart = document.createElement('div');
+      heart.className = 'heart-particle';
+      heart.textContent = ['❤', '★', '✦'][Math.floor(Math.random() * 3)];
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.top = 100 + 'vh';
+      heart.style.color = ['#d4c06a', '#ffd700', '#e74c3c'][Math.floor(Math.random() * 3)];
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 2000);
+    }, i * 60);
+  }
+
+  // 解锁成功后：显示音乐引导按钮（用户点击播放）
+  showMusicHint = true;
+
+  setTimeout(() => {
+    unlockOverlay.classList.remove('show');
+    lockPage.classList.remove('active');
+    mainPage.classList.add('active');
+    startTypewriter();
+    createFloatingStars();
+    createMedals();
+    // 显示音乐 CTA
+    setTimeout(() => {
+      if (showMusicHint) {
+        musicCta.style.display = 'block';
+        musicBtn.classList.add('hint');
+        musicLabel.textContent = '♪ 点击播放：像晴天像雨天';
+      }
+    }, 1500);
+  }, 2800);
+}
+
+let showMusicHint = false;
+
+/* ============ 音乐系统（真实 MP3） ============ */
+let isPlaying = false;
+bgm.volume = 0.6;
+
+function playMusic() {
+  bgm.play().then(() => {
+    isPlaying = true;
+    showMusicHint = false;
+    musicCta.style.display = 'none';
+    musicBtn.classList.remove('hint');
+    musicBtn.classList.add('playing');
+    musicBtn.textContent = '❚❚';
+    musicCtaBtn.classList.add('playing');
+    musicCtaBtn.textContent = '❚❚';
+    musicLabel.textContent = '♪ 正在播放：像晴天像雨天';
+  }).catch(() => {
+    musicLabel.textContent = '♪ 播放失败，请稍后重试';
+  });
+}
+
+function pauseMusic() {
+  bgm.pause();
+  isPlaying = false;
+  musicBtn.classList.remove('playing');
+  musicCtaBtn.classList.remove('playing');
+  musicBtn.textContent = '♪';
+  musicCtaBtn.textContent = '♪';
+  musicLabel.textContent = '点击播放 · 属于我们的旋律';
+  if (mainPage.classList.contains('active')) {
+    showMusicHint = true;
+    musicCta.style.display = 'block';
+  }
+}
+
+// 首次按键激活音频（iOS 兼容）
+keypad.addEventListener('click', (e) => {
+  const key = e.target.closest('.key');
+  if (!key) return;
+
+  if (key.dataset.num !== undefined) inputDigit(key.dataset.num);
+  else if (key.id === 'clearBtn') clearInput();
+  else if (key.id === 'delBtn') deleteDigit();
+});
+
+// 音乐CTA按钮点击
+musicCtaBtn.addEventListener('click', () => {
+  if (isPlaying) pauseMusic();
+  else playMusic();
+});
+
+// 底部音乐按钮点击
+musicBtn.addEventListener('click', () => {
+  if (isPlaying) pauseMusic();
+  else playMusic();
+});
+
+/* ============ 打字机告白 ============ */
+const confessionText = `哥哥：
+
+八一建军节快乐
+今年以另一个身份
+向最可爱的人致敬啦~
+
+愿你每一次出发都有平安，
+每一次归来都有拥抱，
+永远被开心与幸福萦绕。
+
+未来的日子里，
+希望能和你一起，
+看遍四季风景，
+走过春夏秋冬。
+
+——你的佳佳`;
+
+let typeStarted = false;
+function startTypewriter() {
+  if (typeStarted) return;
+  typeStarted = true;
+
+  const tw = document.getElementById('typewriter');
+  let i = 0;
+  const speed = 100;
+
+  function type() {
+    if (i <= confessionText.length) {
+      const text = confessionText.substring(0, i);
+      tw.innerHTML = text + '<span class="cursor"></span>';
+      i++;
+      setTimeout(type, speed);
+    } else {
+      tw.innerHTML = confessionText;
+    }
+  }
+  type();
+}
+
+/* ============ 五角星动画 ============ */
+function createFloatingStars() {
+  const hero = document.querySelector('.hero-section');
+  const starSVGs = [
+    `<svg width="80" height="80" viewBox="0 0 24 24" fill="#d4c06a"><path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.2L2 10l7.1-1.1z"/></svg>`,
+    `<svg width="50" height="50" viewBox="0 0 24 24" fill="#9a9a6a"><path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.2L2 10l7.1-1.1z"/></svg>`,
+    `<svg width="30" height="30" viewBox="0 0 24 24" fill="#c9b86a"><path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.2L2 10l7.1-1.1z"/></svg>`,
+  ];
+  for (let i = 0; i < 6; i++) {
+    const fs = document.createElement('div');
+    fs.className = 'floating-star';
+    fs.innerHTML = starSVGs[i % 3];
+    fs.style.left = Math.random() * 90 + '%';
+    fs.style.top = (10 + Math.random() * 80) + '%';
+    fs.style.setProperty('--float-dur', (15 + Math.random() * 15) + 's');
+    fs.style.animationDelay = (Math.random() * 5) + 's';
+    hero.appendChild(fs);
+  }
+
+  createBlessingStars();
+}
+
+function createBlessingStars() {
+  const blessings = [
+    '山河无恙 有你皆安',
+    '愿世界温柔待你',
+    '等你回来',
+    '希望你开心',
+    '希望你交好运',
+    '希望你健康不生病'
+  ];
+
+  const hero = document.querySelector('.hero-section');
+  const positions = [
+    { left: '12%', top: '18%' },
+    { left: '82%', top: '12%' },
+    { left: '18%', top: '72%' },
+    { left: '78%', top: '68%' },
+    { left: '48%', top: '82%' },
+    { left: '8%', top: '48%' },
+  ];
+
+  positions.forEach((pos, i) => {
+    const star = document.createElement('div');
+    star.className = 'blessing-star';
+    star.style.left = pos.left;
+    star.style.top = pos.top;
+    star.innerHTML = `<svg width="34" height="34" viewBox="0 0 24 24" fill="#d4c06a"><path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.2L2 10l7.1-1.1z"/></svg>`;
+    star.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const msg = blessings[i % blessings.length];
+      showBlessing(e.clientX, e.clientY, msg);
+    });
+    hero.appendChild(star);
+  });
+}
+
+function showBlessing(x, y, msg) {
+  const el = document.createElement('div');
+  el.className = 'click-blessing';
+  el.textContent = msg;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const h = document.createElement('div');
+      h.className = 'heart-particle';
+      h.textContent = ['❤', '★'][Math.floor(Math.random() * 2)];
+      h.style.left = (x + (Math.random() - 0.5) * 60) + 'px';
+      h.style.top = y + 'px';
+      h.style.color = ['#d4c06a', '#ffd700', '#e74c3c'][Math.floor(Math.random() * 3)];
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 2000);
+    }, i * 80);
+  }
+}
+
+/* ============ 三个独立勋章 ============ */
+function createMedals() {
+  const wrap = document.getElementById('medalsWrap');
+  const medals = [
+    { title: '勇敢担当奖', icon: '🎖️' },
+    { title: '认真生活奖', icon: '🏅' },
+    { title: '爱与责任奖', icon: '⭐' },
+  ];
+
+  medals.forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'medal-card';
+    card.style.animationDelay = (i * 0.2) + 's';
+
+    card.innerHTML = `
+      <div class="medal-shape" style="animation-delay:${i * 0.3}s;">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="medalGrad${i}" cx="35%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#f5d77b"/>
+              <stop offset="40%" stop-color="#c9a93e"/>
+              <stop offset="80%" stop-color="#8a6d1f"/>
+              <stop offset="100%" stop-color="#5a4515"/>
+            </radialGradient>
+            <radialGradient id="medalHighlight${i}" cx="35%" cy="30%" r="50%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </radialGradient>
+          </defs>
+          <circle cx="50" cy="50" r="42" fill="url(#medalGrad${i})" stroke="#d4c06a" stroke-width="3"/>
+          <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+          <ellipse cx="38" cy="32" rx="22" ry="15" fill="url(#medalHighlight${i})"/>
+          <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="2,2"/>
+        </svg>
+        <div class="medal-num">${m.icon}</div>
+      </div>
+      <div class="medal-name">${m.title}</div>
+    `;
+
+    card.addEventListener('click', () => {
+      const rect = card.getBoundingClientRect();
+      showBlessing(rect.left + rect.width / 2, rect.top, m.title);
+    });
+
+    wrap.appendChild(card);
+  });
+}
+
+/* ============ 防止解锁页滚动 ============ */
+document.addEventListener('touchmove', (e) => {
+  if (lockPage.classList.contains('active')) {
+    e.preventDefault();
+  }
+}, { passive: false });
+/* ============ Service Worker 注册 ============ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(() => console.log('PWA Service Worker 注册成功'))
+      .catch(() => console.log('PWA Service Worker 注册失败'));
+  });
+}
+
+/* ============ 微信浏览器优化 ============ */
+document.addEventListener("WeixinJSBridgeReady", function () {}, false);
+
+</script>
+
+</body>
+</html>
