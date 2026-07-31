@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bayi-memorial-v1';
+const CACHE_NAME = 'bayi-memorial-v2';
 const ASSETS = [
   './',
   './index.html',
