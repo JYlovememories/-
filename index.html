@@ -615,6 +615,8 @@
   </div>
 </div>
 
+<audio id="bgm" src="./music.mp3" loop preload="auto"></audio>
+
 <script>
 /* ============ 星空生成 ============ */
 (function generateStars() {
@@ -647,6 +649,7 @@ const musicBtn = document.getElementById('musicBtn');
 const musicLabel = document.getElementById('musicLabel');
 const musicCta = document.getElementById('musicCta');
 const musicCtaBtn = document.getElementById('musicCtaBtn');
+const bgm = document.getElementById('bgm');
 
 function updateDisplay() {
   const digits = pwdDisplay.querySelectorAll('.pwd-digit');
@@ -732,139 +735,13 @@ function showUnlock() {
 
 let showMusicHint = false;
 
-/* ============ 双模式音乐系统 ============ */
-let audioCtx = null;
-let bgmAudio = null;      // 外部 MP3 audio 元素
-let useExternalMp3 = false; // 是否成功加载了外部 MP3
-let synthPlaying = false;
-let synthTimer = null;
+/* ============ 音乐系统（真实 MP3） ============ */
 let isPlaying = false;
+bgm.volume = 0.6;
 
-// 尝试加载外部 MP3
-function tryLoadExternalMp3() {
-  return new Promise((resolve) => {
-    const testAudio = new Audio();
-    testAudio.preload = 'auto';
-    testAudio.src = 'music.mp3';
-    testAudio.addEventListener('canplaythrough', () => {
-      bgmAudio = testAudio;
-      bgmAudio.loop = true;
-      bgmAudio.volume = 0.5;
-      useExternalMp3 = true;
-      resolve(true);
-    }, { once: true });
-    testAudio.addEventListener('error', () => {
-      useExternalMp3 = false;
-      resolve(false);
-    }, { once: true });
-    // 2秒超时
-    setTimeout(() => resolve(false), 2000);
-  });
-}
-
-// 合成旋律（C大调五声音阶，柔和浪漫风格）
-const melody = [
-  // [频率Hz, 时长拍数]
-  [523.25, 0.5], [587.33, 0.5], [659.25, 1], [587.33, 0.5],
-  [523.25, 0.5], [440.00, 1], [392.00, 0.5], [523.25, 0.5],
-  [659.25, 0.5], [783.99, 0.5], [880.00, 1], [783.99, 0.5],
-  [659.25, 0.5], [587.33, 1], [523.25, 1], [0, 0.5],
-];
-const bassPattern = [
-  [130.81, 1], [130.81, 1], [130.81, 1], [196.00, 1],
-  [174.61, 1], [174.61, 1], [196.00, 1], [196.00, 1],
-];
-
-function getAudioCtx() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  return audioCtx;
-}
-
-function playSynthNote(freq, startTime, duration, type, volume) {
-  if (freq === 0) return;
-  const ctx = getAudioCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = type;
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0, startTime);
-  gain.gain.linearRampToValueAtTime(volume, startTime + 0.04);
-  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.92);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(startTime);
-  osc.stop(startTime + duration);
-}
-
-function playSynthMelody() {
-  if (!synthPlaying) return;
-  const ctx = getAudioCtx();
-  const beatDur = 0.5; // 每拍0.5秒
-  let now = ctx.currentTime + 0.1;
-
-  // 主旋律
-  let t = now;
-  melody.forEach(([freq, beats]) => {
-    const dur = beats * beatDur;
-    playSynthNote(freq, t, dur, 'triangle', 0.18);
-    t += dur;
-  });
-  const loopEnd = t;
-
-  // 低音伴奏
-  t = now;
-  bassPattern.forEach(([freq, beats]) => {
-    const dur = beats * beatDur * 2;
-    playSynthNote(freq, t, dur, 'sine', 0.12);
-    t += dur;
-  });
-
-  // 高音装饰
-  t = now + beatDur * 0.5;
-  [659.25, 0, 783.99, 0, 659.25, 0, 880.00, 0].forEach((freq, i) => {
-    if (freq > 0) playSynthNote(freq, t + i * beatDur, beatDur * 0.6, 'sine', 0.08);
-  });
-
-  const totalDur = loopEnd - now;
-  synthTimer = setTimeout(playSynthMelody, totalDur * 1000 - 100);
-}
-
-function startSynth() {
-  synthPlaying = true;
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-  playSynthMelody();
-}
-
-function stopSynth() {
-  synthPlaying = false;
-  if (synthTimer) { clearTimeout(synthTimer); synthTimer = null; }
-  if (audioCtx) audioCtx.suspend();
-}
-
-async function tryPlayMusic() {
-  try {
-    const loaded = await tryLoadExternalMp3();
-    if (loaded) {
-      // 使用外部 MP3
-      await bgmAudio.play();
-      updatePlayingUI(true);
-    } else {
-      // 兜底：Web Audio 合成
-      startSynth();
-      updatePlayingUI(true, true);
-    }
-  } catch (e) {
-    // 最终兜底：合成
-    startSynth();
-    updatePlayingUI(true, true);
-  }
-}
-
-function updatePlayingUI(playing, isSynth) {
-  isPlaying = playing;
-  if (playing) {
+function playMusic() {
+  bgm.play().then(() => {
+    isPlaying = true;
     showMusicHint = false;
     musicCta.style.display = 'none';
     musicBtn.classList.remove('hint');
@@ -872,20 +749,23 @@ function updatePlayingUI(playing, isSynth) {
     musicBtn.textContent = '❚❚';
     musicCtaBtn.classList.add('playing');
     musicCtaBtn.textContent = '❚❚';
-    musicLabel.textContent = isSynth
-      ? '♪ 正在播放：合成旋律'
-      : '♪ 正在播放：像晴天像雨天';
-  } else {
-    musicBtn.classList.remove('playing');
-    musicCtaBtn.classList.remove('playing');
-    musicBtn.textContent = '♪';
-    musicCtaBtn.textContent = '♪';
-    musicLabel.textContent = '点击播放 · 属于我们的旋律';
-    // 暂停时再次显示 CTA
-    if (mainPage.classList.contains('active')) {
-      showMusicHint = true;
-      musicCta.style.display = 'block';
-    }
+    musicLabel.textContent = '♪ 正在播放：像晴天像雨天';
+  }).catch(() => {
+    musicLabel.textContent = '♪ 播放失败，请稍后重试';
+  });
+}
+
+function pauseMusic() {
+  bgm.pause();
+  isPlaying = false;
+  musicBtn.classList.remove('playing');
+  musicCtaBtn.classList.remove('playing');
+  musicBtn.textContent = '♪';
+  musicCtaBtn.textContent = '♪';
+  musicLabel.textContent = '点击播放 · 属于我们的旋律';
+  if (mainPage.classList.contains('active')) {
+    showMusicHint = true;
+    musicCta.style.display = 'block';
   }
 }
 
@@ -910,24 +790,14 @@ keypad.addEventListener('click', (e) => {
 
 // 音乐CTA按钮点击
 musicCtaBtn.addEventListener('click', () => {
-  if (isPlaying) {
-    if (useExternalMp3 && bgmAudio) bgmAudio.pause();
-    stopSynth();
-    updatePlayingUI(false);
-  } else {
-    tryPlayMusic();
-  }
+  if (isPlaying) pauseMusic();
+  else playMusic();
 });
 
 // 底部音乐按钮点击
 musicBtn.addEventListener('click', () => {
-  if (isPlaying) {
-    if (useExternalMp3 && bgmAudio) bgmAudio.pause();
-    stopSynth();
-    updatePlayingUI(false);
-  } else {
-    tryPlayMusic();
-  }
+  if (isPlaying) pauseMusic();
+  else playMusic();
 });
 
 /* ============ 打字机告白 ============ */
